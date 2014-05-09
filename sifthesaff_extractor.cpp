@@ -104,7 +104,12 @@ int main(int argc,char *argv[])
 	}
 
 	if(output_sift == "")
-		output_sift = "./" + input_image + ".hesaff.rootsift";
+    {
+        if (contain_path(input_image))
+            output_sift = input_image + ".hesaff.rootsift";
+        else
+            output_sift = "./" + input_image + ".hesaff.rootsift";
+    }
 
 	SIFThesaff sifthesaff(colorspace, normsift, rootsift);
 
