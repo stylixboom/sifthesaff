@@ -39,6 +39,8 @@ using namespace alphautils;
 
 class SIFThesaff
 {
+    bool check_file_exist;
+
     int colorspace;
     bool normalize;
 	bool RootSIFT;
@@ -51,7 +53,7 @@ class SIFThesaff
     const static int LAB_SPACE = 2;
 
 public:
-	SIFThesaff(int Colorspace = RGB_SPACE, bool isNormalize = false, bool isRootSIFT = true); // colorspace = 0 is rgb
+	SIFThesaff(int Colorspace = RGB_SPACE, bool isNormalize = false, bool isRootSIFT = true, bool isCheckFile = true); // colorspace = 0 is rgb
 	~SIFThesaff(void);
 	static string version() { return siftlib_AutoVersion::siftlib_FULLVERSION_STRING; }; // Version
 	vector< vector<float> > kp; // x y a b c

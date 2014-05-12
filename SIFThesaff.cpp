@@ -11,11 +11,12 @@ using namespace std;
 using namespace cv;
 using namespace alphautils;
 
-SIFThesaff::SIFThesaff(int Colorspace, bool isNormalize, bool isRootSIFT)
+SIFThesaff::SIFThesaff(int Colorspace, bool isNormalize, bool isRootSIFT, bool isCheckFile)
 {
     colorspace = Colorspace;
     normalize = isNormalize;
 	RootSIFT = isRootSIFT;
+	check_file_exist = isCheckFile;
 	g_numberOfPoints = 0;
 	g_numberOfAffinePoints = 0;
 	num_kp = 0;
@@ -111,7 +112,7 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
 
 void SIFThesaff::importKeypoints(const string& in, bool isBinary)
 {
-    if(!is_path_exist(in)) // no exist
+    if(check_file_exist && !is_path_exist(in)) // no exist
     {
         cout << "File \"" << in << "\" not found" << endl;
         return;
@@ -198,7 +199,7 @@ int SIFThesaff::checkNumKp(const string& in, bool isBinary)
 {
     int ret_num_sift = -1;
 
-    if(!is_path_exist(in)) // no exist
+    if(check_file_exist && !is_path_exist(in)) // no exist
     {
         cout << "File \"" << in << "\" not found" << endl;
         return -1;
