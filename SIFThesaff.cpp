@@ -112,13 +112,19 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
 
 void SIFThesaff::importKeypoints(const string& in, bool isBinary)
 {
+    Reset();
+
     if(check_file_exist && !is_path_exist(in)) // no exist
     {
         cout << "File \"" << in << "\" not found" << endl;
         return;
-    }
 
-	Reset();
+        char opt;
+        cout << "Wanna try to extract?\nPlease do it manually 'y' or skip 'n' [y|n]:"; cout.flush();
+        cin >> opt;
+        if (opt == 'n')
+            return;   // interpret as no sift keypoint
+    }
 
     // Oxford format
 	if(isBinary)
@@ -197,12 +203,17 @@ void SIFThesaff::importKeypoints(const string& in, bool isBinary)
 
 int SIFThesaff::checkNumKp(const string& in, bool isBinary)
 {
-    int ret_num_sift = -1;
+    int ret_num_sift = 0;
 
     if(check_file_exist && !is_path_exist(in)) // no exist
     {
         cout << "File \"" << in << "\" not found" << endl;
-        return -1;
+
+        char opt;
+        cout << "Wanna try to extract?\nPlease do it manually 'y' or skip 'n' [y|n]:"; cout.flush();
+        cin >> opt;
+        if (opt == 'n')
+            return 0;   // interpret as no sift keypoint
     }
 
     // Oxford format
