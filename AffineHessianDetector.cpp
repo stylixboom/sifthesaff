@@ -12,6 +12,7 @@
 #include "opencv2/calib3d/calib3d.hpp"
 
 #define D 128
+#define HEADSIZE 5
 
 using namespace cv;
 using namespace std;
@@ -91,15 +92,10 @@ public:
 		}
 	}
 
-	int extractKeypoints(vector< vector<float> >& kp, vector< vector<float> >& desc)
+	int extractKeypoints(vector<float*>& kp, vector<float*>& desc)
 	{
-		/*
-		kp = new float[5*keys.size()];
-		desc = new float[D*keys.size()];
-		float* kp_ptr = kp;
-		float* desc_ptr = desc;
-		*/
-		for (size_t i=0; i<keys.size(); i++)
+	    int num_kp = keys.size();
+		for (int i=0; i<num_kp; i++)
 		{
 			Keypoint k = keys[i];
 
@@ -113,39 +109,40 @@ public:
 
 			A = svd.u * Mat::diag(svd.w) * svd.u.t();
 
-			vector<float> p;
-			p.push_back(k.x);
-			p.push_back(k.y);
-			p.push_back(A.at<float>(0,0));
-			p.push_back(A.at<float>(0,1));
-			p.push_back(A.at<float>(1,1));
-			kp.push_back(p);
+            // Keypoint
+            float* curr_kp = new float[HEADSIZE];
+			curr_kp[0] = k.x;
+			curr_kp[1] = k.y;
+			curr_kp[2] = A.at<float>(0,0);
+			curr_kp[3] = A.at<float>(0,1);
+			curr_kp[4] = A.at<float>(1,1);
+			kp.push_back(curr_kp);
+
+			// Descriptor
+			float* curr_desc = new float[D];
 			if (RootSIFT)
 			{
 				float sum_of_desc = 0;
 				for (size_t i=0; i<D; i++)
 					sum_of_desc += k.desc[i];
-				vector<float> des;
 				for (size_t i=0; i<D; i++)
-					des.push_back(sqrt(k.desc[i]/sum_of_desc));
-				desc.push_back(des);
+					curr_desc[i] = sqrt(k.desc[i]/sum_of_desc);
 			}
 			else
 			{
-				vector<float> des;
 				for (size_t i=0; i<D; i++)
-					des.push_back(k.desc[i]);
-				desc.push_back(des);
+					curr_desc[i] = k.desc[i];
 			}
+            desc.push_back(curr_desc);
 
 		}
-		return keys.size();
+		return num_kp;
 	}
 
 	void Reset()
 	{
 		// Release Mem
-		if(keys.size() != 0)
+		if(keys.size())
 		{
 			keys.clear();
 

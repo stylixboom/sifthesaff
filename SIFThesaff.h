@@ -56,8 +56,11 @@ public:
 	SIFThesaff(int Colorspace = RGB_SPACE, bool isNormalize = false, bool isRootSIFT = true, bool isCheckFile = true); // colorspace = 0 is rgb
 	~SIFThesaff(void);
 	static string version() { return siftlib_AutoVersion::siftlib_FULLVERSION_STRING; }; // Version
-	vector< vector<float> > kp; // x y a b c
-	vector< vector<float> > desc; // x-descriptors
+	static int GetSIFTD() { return D; };
+	static int GetSIFTHeadSize() { return HEADSIZE; };
+
+	vector<float*> kp; // x y a b c
+	vector<float*> desc; // x-descriptors
 	int num_kp;
 	int width, height;
 	struct HessianAffineParams;
@@ -67,7 +70,5 @@ public:
 	void extractPerdochSIFT(const string& imgPath);
 	void extractPerdochSIFT(const Mat& img);
 	void Reset(void);
-	int GetSIFTD(void);
-	int GetSIFTHeadSize(void);
 	void rgb2lab(const uchar R, const uchar G, const uchar B, uchar& Lv, uchar& av, uchar& bv);
 };

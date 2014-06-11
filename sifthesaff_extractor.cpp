@@ -135,7 +135,7 @@ int main(int argc,char *argv[])
 
     cout << "== SIFT feature information ==" << endl;
     cout << "Total dimension: " << sifthesaff.GetSIFTD() << endl;
-    cout << "Total keypoint: " << sifthesaff.kp.size() << endl;
+    cout << "Total keypoint: " << sifthesaff.num_kp << endl;
 
 
 	return 0;

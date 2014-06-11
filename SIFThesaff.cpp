@@ -58,10 +58,6 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
 		ofstream OutFile (out.c_str(), ios::binary);
 		if (OutFile.is_open())
 		{
-			int head_len = GetSIFTHeadSize();
-			int len_sift = GetSIFTD();
-			int num_sift = num_kp;
-
             // Write width
             OutFile.write(reinterpret_cast<char*>(&width), sizeof(width));
 
@@ -69,19 +65,21 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
             OutFile.write(reinterpret_cast<char*>(&height), sizeof(height));
 
 			// Write len_sift
+			int len_sift = D;
 			OutFile.write(reinterpret_cast<char*>(&len_sift), sizeof(len_sift));
 
-			// Write num_sift
-			OutFile.write(reinterpret_cast<char*>(&num_sift), sizeof(num_sift));
+			// Write num_kp
+			OutFile.write(reinterpret_cast<char*>(&num_kp), sizeof(num_kp));
 
 			// Write sift "x y a b c" and "all dimensions"
-			for(int sift_count = 0; sift_count != num_sift; sift_count++)
+			for(int kp_idx = 0; kp_idx != num_kp; kp_idx++)
 			{
 				// Write sift head
-				OutFile.write(reinterpret_cast<char*>(&kp[sift_count][0]), head_len * sizeof(kp[sift_count][0]));
+				//OutFile.write(reinterpret_cast<char*>(&kp[sift_count][0]), HEADSIZE * sizeof(kp[kp_idx][0])); // Prev-Work
+				OutFile.write(reinterpret_cast<char*>(kp[kp_idx]), HEADSIZE * sizeof(*kp[kp_idx]));
 
 				// Write sift data
-				OutFile.write(reinterpret_cast<char*>(&desc[sift_count][0]), len_sift * sizeof(desc[sift_count][0]));
+				OutFile.write(reinterpret_cast<char*>(desc[kp_idx]), D * sizeof(*desc[kp_idx]));
 			}
 			// Close file
 			OutFile.close();
@@ -97,11 +95,11 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
             OutFile << D << endl;
             OutFile << num_kp << endl;
 
-            for(size_t kpIdx = 0; kpIdx < kp.size(); kpIdx++)
+            for(int kp_idx = 0; kp_idx < num_kp; kp_idx++)
             {
-                OutFile << kp[kpIdx][0] << " " << kp[kpIdx][1] << " " << kp[kpIdx][2] << " " << kp[kpIdx][3] << " " << kp[kpIdx][4] << " ";
-                for(size_t descIdx = 0; descIdx < desc[kpIdx].size(); descIdx++)
-                    OutFile << desc[kpIdx][descIdx] << " ";
+                OutFile << kp[kp_idx][0] << " " << kp[kp_idx][1] << " " << kp[kp_idx][2] << " " << kp[kp_idx][3] << " " << kp[kp_idx][4] << " ";
+                for(size_t desc_pos = 0; desc_pos < D; desc_pos++)
+                    OutFile << desc[kp_idx][desc_pos] << " ";
                 OutFile << endl;
             }
 
@@ -132,8 +130,6 @@ void SIFThesaff::importKeypoints(const string& in, bool isBinary)
 		ifstream InFile (in.c_str(), ios::binary);
 		if (InFile)
 		{
-			int head_len = GetSIFTHeadSize();
-
             // Read width
             InFile.read((char*)(&width), sizeof(width));
 
@@ -141,6 +137,7 @@ void SIFThesaff::importKeypoints(const string& in, bool isBinary)
             InFile.read((char*)(&height), sizeof(height));
 
 			// Read len_sift
+			// Same as D
             int len_sift;
             InFile.read((char*)(&len_sift), sizeof(len_sift));
 
@@ -150,27 +147,19 @@ void SIFThesaff::importKeypoints(const string& in, bool isBinary)
             num_kp = num_sift;
 
 			// Read sift "x y a b c" and "all dimensions"
-			for(int sift_count = 0; sift_count != num_sift; sift_count++)
+			for(int kp_idx = 0; kp_idx != num_kp; kp_idx++)
 			{
 				// Read sift head "x y a b c"
-                vector<float> sub_kp;
-				for(int head_count = 0; head_count < head_len; head_count++)
-				{
-                    float read_head;
-                    InFile.read((char*)(&read_head), sizeof(read_head));
-                    sub_kp.push_back(read_head);
-                }
-                kp.push_back(sub_kp);
+                float* read_kp = new float[HEADSIZE];
+				for(int head_pos = 0; head_pos < HEADSIZE; head_pos++)
+                    InFile.read((char*)(&read_kp[head_pos]), sizeof(read_kp[head_pos]));
+                kp.push_back(read_kp);
 
 				// Read sift data "128D"
-                vector<float> sub_desc;
-				for(int data_count = 0; data_count < len_sift; data_count++)
-				{
-                    float read_data;
-                    InFile.read((char*)(&read_data), sizeof(read_data));
-                    sub_desc.push_back(read_data);
-                }
-                desc.push_back(sub_desc);
+                float* read_desc = new float[len_sift];
+				for(int desc_pos = 0; desc_pos < len_sift; desc_pos++)
+                    InFile.read((char*)(&read_desc[desc_pos]), sizeof(read_desc[desc_pos]));
+                desc.push_back(read_desc);
 			}
 			// Close file
 			InFile.close();
@@ -373,12 +362,12 @@ void SIFThesaff::extractPerdochSIFT(const Mat& tmp)
 void SIFThesaff::Reset(void)
 {
 	// Release Mem
-	if(kp.size() != 0)
+	if(kp.size())
 	{
-		for(size_t idx = 0; idx < kp.size(); idx++)
+		for(int kp_idx = 0; kp_idx < num_kp; kp_idx++)
 		{
-			kp[idx].clear();
-			desc[idx].clear();
+			delete[] kp[kp_idx];
+			delete[] desc[kp_idx];
 		}
 		kp.clear();
 		desc.clear();
@@ -387,16 +376,6 @@ void SIFThesaff::Reset(void)
 		g_numberOfAffinePoints = 0;
 		num_kp = 0;
 	}
-}
-
-int SIFThesaff::GetSIFTD(void)
-{
-	return D;
-}
-
-int SIFThesaff::GetSIFTHeadSize(void)
-{
-	return HEADSIZE;
 }
 
 void SIFThesaff::rgb2lab(const uchar R, const uchar G, const uchar B, uchar &Lv, uchar &av, uchar &bv)
