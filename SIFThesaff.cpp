@@ -4,8 +4,32 @@
  *  Created on: January 25, 2013
  *      Author: Siriwat Kasamwattanarote
  */
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <sys/stat.h>   // file-directory existing
+#include <sys/types.h>  // file-directory
+#include <dirent.h>     // file-directory
+
+#include "opencv2/core/core.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+// Siriwat's header
+#include "../alphautils/alphautils.h"
+
+#include "AffineHessianDetector.cpp"
+#include "pyramid.h"
+#include "helpers.h"
+#include "affine.h"
+#include "siftdesc.h"
 
 #include "SIFThesaff.h"
+
+#include "version_lib.h"
 
 using namespace std;
 using namespace cv;
@@ -13,13 +37,7 @@ using namespace alphautils;
 
 SIFThesaff::SIFThesaff(int Colorspace, bool isNormalize, bool isRootSIFT, bool isCheckFile)
 {
-    colorspace = Colorspace;
-    normalize = isNormalize;
-	RootSIFT = isRootSIFT;
-	check_file_exist = isCheckFile;
-	g_numberOfPoints = 0;
-	g_numberOfAffinePoints = 0;
-	num_kp = 0;
+    init(Colorspace, isNormalize, isRootSIFT, isCheckFile);
 }
 
 SIFThesaff::~SIFThesaff(void)
@@ -36,15 +54,28 @@ struct SIFThesaff::HessianAffineParams
 	bool  verbose;
 	HessianAffineParams()
 	{
-		threshold = 16.0f/4.6875f;
-		//threshold = 0.04f * 256 / 3;
-		//threshold = 16.0f/5.0f; // affect detector, higher t for lower number of feature, lower t for higher number of feature (high sensitive)
-		max_iter = 16; // affect detector, higher it for higher number of feature, lower it for lower number of feature (low sensitive)
-		desc_factor = 3.0f*sqrt(3.0f); // affect descriptor
-		patch_size = 41; // affect descriptor
+	    //threshold = 16.0f/3.0f;           // original
+		threshold = 16.0f/4.6875f;        // 0.04f * 256 / 3 from pyramid.h;  // Siriwat's baseline
+		//threshold = 16.0f/6.0f;             // affect detector, higher t for lower number of feature, lower t for higher number of feature (high sensitive)
+		max_iter = 16;                      // affect detector, higher it for higher number of feature, lower it for lower number of feature (low sensitive)
+		desc_factor = 3.0f*sqrt(3.0f);      // affect descriptor
+		patch_size = 41;                    // affect descriptor
 		verbose = false;
 	}
 };
+
+void SIFThesaff::init(int Colorspace, bool isNormalize, bool isRootSIFT, bool isCheckFile)
+{
+    colorspace = Colorspace;
+    normalize = isNormalize;
+	RootSIFT = isRootSIFT;
+	check_file_exist = isCheckFile;
+	g_numberOfPoints = 0;
+	g_numberOfAffinePoints = 0;
+	num_kp = 0;
+	has_kp = false;
+	has_desc = false;
+}
 
 void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
 {
@@ -58,31 +89,62 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
 		ofstream OutFile (out.c_str(), ios::binary);
 		if (OutFile.is_open())
 		{
-            // Write width
-            OutFile.write(reinterpret_cast<char*>(&width), sizeof(width));
+		    /// Prepare buffer
+		    size_t buffer_size = sizeof(int) * 4 +
+                                 num_kp * (HEADSIZE * sizeof(float) + D * sizeof(float));
+                                 // sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(num_kp) +
+                                 // num_kp * (HEADSIZE * sizeof(kp) + D * sizeof(desc))
+            char* buffer = new char[buffer_size];
+            char* buffer_ptr = buffer;
 
-            // Write height
-            OutFile.write(reinterpret_cast<char*>(&height), sizeof(height));
+		    /// Put buffer
+            // Put width
+            *((int*)buffer_ptr) = width;
+            buffer_ptr += sizeof(int);
 
-			// Write len_sift
-			int len_sift = D;
-			OutFile.write(reinterpret_cast<char*>(&len_sift), sizeof(len_sift));
+            // Put height
+            *((int*)buffer_ptr) = height;
+            buffer_ptr += sizeof(int);
 
-			// Write num_kp
-			OutFile.write(reinterpret_cast<char*>(&num_kp), sizeof(num_kp));
+			// Put len_sift
+            *((int*)buffer_ptr) = D;
+            buffer_ptr += sizeof(int);
 
-			// Write sift "x y a b c" and "all dimensions"
-			for(int kp_idx = 0; kp_idx != num_kp; kp_idx++)
+			// Put num_kp
+            *((int*)buffer_ptr) = num_kp;
+            buffer_ptr += sizeof(int);
+
+			// Put sift "x y a b c" and "all dimensions"
+			for(int kp_idx = 0; kp_idx < num_kp; kp_idx++)
 			{
-				// Write sift head
-				//OutFile.write(reinterpret_cast<char*>(&kp[sift_count][0]), HEADSIZE * sizeof(kp[kp_idx][0])); // Prev-Work
-				OutFile.write(reinterpret_cast<char*>(kp[kp_idx]), HEADSIZE * sizeof(*kp[kp_idx]));
+				// Put sift head x y a b c
+                *((float*)buffer_ptr) = kp[kp_idx][0];
+                buffer_ptr += sizeof(float);
+                *((float*)buffer_ptr) = kp[kp_idx][1];
+                buffer_ptr += sizeof(float);
+                *((float*)buffer_ptr) = kp[kp_idx][2];
+                buffer_ptr += sizeof(float);
+                *((float*)buffer_ptr) = kp[kp_idx][3];
+                buffer_ptr += sizeof(float);
+                *((float*)buffer_ptr) = kp[kp_idx][4];
+                buffer_ptr += sizeof(float);
 
-				// Write sift data
-				OutFile.write(reinterpret_cast<char*>(desc[kp_idx]), D * sizeof(*desc[kp_idx]));
+				// Put sift data
+				for (int desc_idx = 0; desc_idx < D; desc_idx++)
+                {
+                    *((float*)buffer_ptr) = desc[kp_idx][desc_idx];
+                    buffer_ptr += sizeof(float);
+                }
 			}
+
+			// Write file from buffer
+			OutFile.write(buffer, buffer_size);
+
 			// Close file
 			OutFile.close();
+
+			// Release memory
+			delete[] buffer;
 		}
 	}
 	else
@@ -108,61 +170,97 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
 	}
 }
 
-void SIFThesaff::importKeypoints(const string& in, bool isBinary)
+bool SIFThesaff::importKeypoints(const string& in, bool isBinary)
 {
     Reset();
 
     if(check_file_exist && !is_path_exist(in)) // no exist
     {
         cout << "File \"" << in << "\" not found" << endl;
-        return;
 
         char opt;
         cout << "Wanna try to extract?\nPlease do it manually 'y' or skip 'n' [y|n]:"; cout.flush();
         cin >> opt;
         if (opt == 'n')
-            return;   // interpret as no sift keypoint
+            return false;   // interpret as no sift keypoint
     }
 
     // Oxford format
 	if(isBinary)
 	{
+	    // Prepare buffer
 		ifstream InFile (in.c_str(), ios::binary);
 		if (InFile)
 		{
-            // Read width
-            InFile.read((char*)(&width), sizeof(width));
+		    /// Create buffer
+		    InFile.seekg(0, InFile.end);
+            size_t buffer_size = InFile.tellg();
+		    InFile.seekg(0, InFile.beg);
+            char* buffer = new char[buffer_size];
+            char* buffer_ptr = buffer;
+
+		    // Read whole file into buffer
+		    InFile.read(buffer, buffer_size);
+
+			// Close file
+			InFile.close();
+
+			/// Interpret from buffer
+			// Read width
+            width = *((int*)buffer_ptr);
+            buffer_ptr += sizeof(width);
 
             // Read height
-            InFile.read((char*)(&height), sizeof(height));
+            height = *((int*)buffer_ptr);
+            buffer_ptr += sizeof(height);
 
 			// Read len_sift
 			// Same as D
             int len_sift;
-            InFile.read((char*)(&len_sift), sizeof(len_sift));
+            len_sift = *((int*)buffer_ptr);
+            buffer_ptr += sizeof(len_sift);
 
 			// Read num_sift
-            int num_sift;
-            InFile.read((char*)(&num_sift), sizeof(num_sift));
-            num_kp = num_sift;
+            num_kp = *((int*)buffer_ptr);
+            buffer_ptr += sizeof(num_kp);
+
+            size_t actual_filesize = sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(num_kp) + (num_kp * (HEADSIZE * sizeof(float) + len_sift * sizeof(float)));
+            if (actual_filesize != buffer_size)
+            {
+                cout << "SIFT file is corrupt: " << in << endl;
+
+                char opt;
+                cout << "Wanna try to extract?\nPlease do it manually 'y' or skip 'n' [y|n]:"; cout.flush();
+                cin.clear();
+                cin >> opt;
+                if (opt == 'n')
+                    exit(EXIT_FAILURE);
+            }
 
 			// Read sift "x y a b c" and "all dimensions"
-			for(int kp_idx = 0; kp_idx != num_kp; kp_idx++)
+			for(int kp_idx = 0; kp_idx < num_kp; kp_idx++)
 			{
 				// Read sift head "x y a b c"
                 float* read_kp = new float[HEADSIZE];
 				for(int head_pos = 0; head_pos < HEADSIZE; head_pos++)
-                    InFile.read((char*)(&read_kp[head_pos]), sizeof(read_kp[head_pos]));
+                {
+                    read_kp[head_pos] = *((float*)buffer_ptr);
+                    buffer_ptr += sizeof(read_kp[head_pos]);
+                }
                 kp.push_back(read_kp);
 
 				// Read sift data "128D"
                 float* read_desc = new float[len_sift];
 				for(int desc_pos = 0; desc_pos < len_sift; desc_pos++)
-                    InFile.read((char*)(&read_desc[desc_pos]), sizeof(read_desc[desc_pos]));
+                {
+                    read_desc[desc_pos] = *((float*)buffer_ptr);
+                    buffer_ptr += sizeof(read_desc[desc_pos]);
+                }
                 desc.push_back(read_desc);
 			}
-			// Close file
-			InFile.close();
+
+			// Release buffer
+			delete[] buffer;
 		}
 	}
 	else
@@ -188,6 +286,12 @@ void SIFThesaff::importKeypoints(const string& in, bool isBinary)
         }
         */
 	}
+
+	// Flag memory allocated
+    has_kp = true;
+    has_desc = true;
+
+    return true;
 }
 
 int SIFThesaff::checkNumKp(const string& in, bool isBinary)
@@ -211,23 +315,48 @@ int SIFThesaff::checkNumKp(const string& in, bool isBinary)
 		ifstream InFile (in.c_str(), ios::binary);
 		if (InFile)
 		{
-            // Read width
-            InFile.read((char*)(&width), sizeof(width));
-
-            // Read height
-            InFile.read((char*)(&height), sizeof(height));
-
-			// Read len_sift
             int len_sift;
-            InFile.read((char*)(&len_sift), sizeof(len_sift));
+		    /// Create buffer
+            size_t buffer_size = sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(ret_num_sift);
+            char* buffer = new char[buffer_size];
+            char* buffer_ptr = buffer;
 
-			// Read ret_num_sift
-            InFile.read((char*)(&ret_num_sift), sizeof(ret_num_sift));
+		    // Read whole file into buffer
+		    InFile.read(buffer, buffer_size);
 
-            // Stop reading the rest
+            InFile.seekg(0, InFile.end);
+            size_t file_size = InFile.tellg();
 
 			// Close file
 			InFile.close();
+
+			/// Interpret from buffer
+			// Read width
+            width = *((int*)buffer_ptr);
+            buffer_ptr += sizeof(width);
+
+            // Read height
+            height = *((int*)buffer_ptr);
+            buffer_ptr += sizeof(height);
+
+			// Read len_sift
+            len_sift = *((int*)buffer_ptr);
+            buffer_ptr += sizeof(len_sift);
+
+			// Read ret_num_sift
+            ret_num_sift = *((int*)buffer_ptr);
+            buffer_ptr += sizeof(ret_num_sift);
+
+            size_t actual_filesize = sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(ret_num_sift) + (ret_num_sift * (HEADSIZE * sizeof(float) + len_sift * sizeof(float)));
+            if (actual_filesize != file_size)
+            {
+                cout << "SIFT corrupt: " << actual_filesize << " - " << file_size << " " << in << endl;
+            }
+            else
+            // Stop reading the rest
+
+			// Release buffer
+			delete[] buffer;
 		}
 	}
 	else
@@ -254,17 +383,21 @@ int SIFThesaff::checkNumKp(const string& in, bool isBinary)
         */
 	}
 
+    // Keep num_kp
+    num_kp = ret_num_sift;
 	return ret_num_sift; // num_kp
 }
 
-void SIFThesaff::extractPerdochSIFT(const string& imgPath)
+int SIFThesaff::extractPerdochSIFT(const string& imgPath)
 {
 	Mat tmp = imread(imgPath);
 	extractPerdochSIFT(tmp);
 	tmp.release();
+
+	return num_kp;
 }
 
-void SIFThesaff::extractPerdochSIFT(const Mat& tmp)
+int SIFThesaff::extractPerdochSIFT(const Mat& tmp)
 {
 	Reset();
 
@@ -357,20 +490,38 @@ void SIFThesaff::extractPerdochSIFT(const Mat& tmp)
             kp[kp_idx][1] /= height;
         }
     }
+
+    // Flag memory allocated
+    has_kp = true;
+    has_desc = true;
+
+    return num_kp;
+}
+
+void SIFThesaff::unlink_kp()
+{
+    has_kp = false;
+}
+
+void SIFThesaff::unlink_desc()
+{
+    has_desc = false;
 }
 
 void SIFThesaff::Reset(void)
 {
 	// Release Mem
-	if(kp.size())
+	if(num_kp)
 	{
-		for(int kp_idx = 0; kp_idx < num_kp; kp_idx++)
+	    size_t actual_kp = kp.size();
+		for(size_t kp_idx = 0; kp_idx < actual_kp; kp_idx++)
 		{
-			delete[] kp[kp_idx];
-			delete[] desc[kp_idx];
+			if (has_kp) delete[] kp[kp_idx];
+			if (has_desc) delete[] desc[kp_idx];
 		}
-		kp.clear();
-		desc.clear();
+		vector<float*>().swap(kp);
+		vector<float*>().swap(desc);
+		has_kp = has_desc = false;
 
 		g_numberOfPoints = 0;
 		g_numberOfAffinePoints = 0;
