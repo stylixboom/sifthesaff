@@ -31,12 +31,13 @@ int main(int argc,char *argv[])
 
 	if(argc < 2)
 	{
-		cout << "Params must be \"sifthesaff_extractor -i input_image [-o output_sift] [-m output_mode:b|t] [-c colorspace:r(rgb)|i(irgb)|l(lab)] [-n normpoint:1|0] [-r rootsift:1|0] [-v:a|p, draw overlay in only binary mode]\"" << endl;
+		cout << "Params must be \"sifthesaff_extractor -i input_image [-o output_sift] [-d input_sift(display)] [-m output_mode:b|t] [-c colorspace:r(rgb)|i(irgb)|l(lab)] [-n normpoint:1|0] [-r rootsift:1|0] [-v:a|p, draw overlay in only binary mode]\"" << endl;
 		exit(1);
 	}
 
 	string input_image = "";
 	string output_sift = "";
+	string input_sift = "";
 	string output_overlay_image = "";
 	bool isBinary = false;
 	int colorspace = RGB_SPACE;
@@ -65,6 +66,9 @@ int main(int argc,char *argv[])
 			case 'o':
 				output_sift = string(argv[count + 1]);
 				break;
+            case 'd':
+                input_sift = string(argv[count + 1]);
+                break;
 			case 'm':
 				if(argv[count + 1][0] == 'b')
 					isBinary = true;
@@ -96,6 +100,28 @@ int main(int argc,char *argv[])
 	}
 
     //input_image = "/dev/shm/test.jpg";
+
+    if (input_sift != "")
+    {
+        SIFThesaff sift_display;
+        sift_display.importKeypoints(input_sift, isBinary);
+
+        cout << sift_display.width << endl;
+        cout << sift_display.height << endl;
+        cout << SIFThesaff::GetSIFTD() << endl;
+        cout << sift_display.num_kp << endl;
+
+        for(int kp_idx = 0; kp_idx < sift_display.num_kp; kp_idx++)
+        {
+            cout << sift_display.kp[kp_idx][0] << " " << sift_display.kp[kp_idx][1] << " " << sift_display.kp[kp_idx][2] << " " << sift_display.kp[kp_idx][3] << " " << sift_display.kp[kp_idx][4] << " ";
+            for(size_t desc_pos = 0; desc_pos < D; desc_pos++)
+                cout << sift_display.desc[kp_idx][desc_pos] << " ";
+            cout << endl;
+        }
+
+
+        return EXIT_SUCCESS;
+    }
 
 	if(input_image == "")
 	{
