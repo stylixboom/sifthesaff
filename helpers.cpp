@@ -9,7 +9,6 @@
 
 #include <cmath>
 #include <iostream>
-
 #include <sys/times.h>
 #include <time.h>
 #include <sys/time.h>
@@ -248,8 +247,7 @@ bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy, float a11, f
     {
         float imx = ofsx + x[i]*a11 + y[i]*a12;
         float imy = ofsy + x[i]*a21 + y[i]*a22;
-        if (int(imx) <= 0 || int(imy) <= 0 || ceil(imx) >= width || ceil(imy) >= height)
-            //if (floor(imx) <= 0 || floor(imy) <= 0 || ceil(imx) >= width || ceil(imy) >= height)    // slow by floor
+        if (floor(imx) <= 0 || floor(imy) <= 0 || ceil(imx) >= width || ceil(imy) >= height)
             return true;
     }
     return false;
@@ -264,8 +262,7 @@ bool interpolate(const Mat &im, float ofsx, float ofsy, float a11, float a12, fl
     // output size
     const int halfWidth  = res.cols >> 1;
     const int halfHeight = res.rows >> 1;
-    float* out = res.ptr<float>(0);
-    float* imdata = (float*)im.data;
+    float *out = res.ptr<float>(0);
     for (int j=-halfHeight; j<=halfHeight; ++j)
     {
         const float rx = ofsx + j * a12;
@@ -274,10 +271,8 @@ bool interpolate(const Mat &im, float ofsx, float ofsy, float a11, float a12, fl
         {
             float wx = rx + i * a11;
             float wy = ry + i * a21;
-            const int x = int(wx);             // Modified fast
-            const int y = int(wy);
-            //const int x = (int) floor(wx);   // Original slow
-            //const int y = (int) floor(wy);
+            const int x = (int) floor(wx);
+            const int y = (int) floor(wy);
             if (x >= 0 && y >= 0 && x < width && y < height)
             {
                 // compute weights
@@ -285,11 +280,8 @@ bool interpolate(const Mat &im, float ofsx, float ofsy, float a11, float a12, fl
                 wy -= y;
                 // bilinear interpolation
                 *out++ =
-                    (1.0f - wy) * ((1.0f - wx) * *(imdata + (y*im.cols+x))   + wx * *(imdata + (y*im.cols+x+1))) +
-                    (       wy) * ((1.0f - wx) * *(imdata + ((y+1)*im.cols+x)) + wx * *(imdata + ((y+1)*im.cols+x+1)));
-                /**out++ =
-                   (1.0f - wy) * ((1.0f - wx) * im.at<float>(y,x)   + wx * im.at<float>(y,x+1)) +
-                   (       wy) * ((1.0f - wx) * im.at<float>(y+1,x) + wx * im.at<float>(y+1,x+1));*/
+                    (1.0f - wy) * ((1.0f - wx) * im.at<float>(y,x)   + wx * im.at<float>(y,x+1)) +
+                    (       wy) * ((1.0f - wx) * im.at<float>(y+1,x) + wx * im.at<float>(y+1,x+1));
             }
             else
             {
@@ -308,53 +300,34 @@ void photometricallyNormalize(Mat &image, const Mat &binaryMask, float &sum, flo
     sum=0;
     float gsum=0;
 
-    float* imagedata = (float*)image.data;      // Modified with fast access
-    float* maskdata = (float*)binaryMask.data;
-
     for (int j=0; j < height; j++)
-    {
-        int jw = j*width;                       // tmp calculation
         for (int i=0; i < width; i++)
-        {
-            int jwi = jw + i;
-            if (*(maskdata + jwi)>0)            // access data instead of at()
+            if (binaryMask.at<float>(j,i)>0)
             {
-                sum += *(imagedata + jwi);      // access data instead of at()
+                sum += image.at<float>(j,i);
                 gsum ++;
             }
-        }
-    }
     sum = sum / gsum;
 
     var=0;
     for (int j=0; j < height; j++)
-    {
-        int jw = j*width;                       // tmp calculation
         for (int i=0; i < width; i++)
-        {
-            int jwi = jw + 1;
-            if (*(maskdata + jwi)>0)            // access data instead of at()
-                var += (sum - *(imagedata + jwi))*(sum - *(imagedata + jwi)); // access data instead of at()
-        }
-    }
+            if (binaryMask.at<float>(j,i)>0)
+                var += (sum - image.at<float>(j,i))*(sum - image.at<float>(j,i));
 
-    var = sqrt(var / gsum);
+    var = ::sqrt(var / gsum);
     if (var < 0.0001)
         // if variance is too low, don't do anything
         return;
 
     float fac = 50.0f/var;
     for (int j=0; j < height; j++)
-    {
-        int jw = j*width;                       // tmp calculation
         for (int i=0; i < width; i++)
         {
-            float* imagedata_jwi = imagedata + jw + i;
-            *imagedata_jwi = 128 + fac * (*imagedata_jwi - sum);
-            if (*imagedata_jwi > 255) *imagedata_jwi=255;
-            if (*imagedata_jwi < 0)   *imagedata_jwi=0;
+            image.at<float>(j,i) = 128 + fac * (image.at<float>(j,i) - sum);
+            if (image.at<float>(j,i) > 255) image.at<float>(j,i)=255;
+            if (image.at<float>(j,i) < 0)   image.at<float>(j,i)=0;
         }
-    }
 }
 
 Mat gaussianBlur(const Mat input, float sigma)

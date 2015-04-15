@@ -33,12 +33,13 @@ struct PyramidParams
    int  border;
    PyramidParams()
       {
-         upscaleInputImage = 0;
-         numberOfScales = 3;
-         initialSigma = 1.6f;
-         threshold = 16.0f/3.0f; //0.04f * 256 / 3;
-         edgeEigenValueRatio = 10.0f;
-         border = 5;
+         upscaleInputImage = 0;         // original
+         numberOfScales = 3;            // original
+         initialSigma = 1.6f;           // original
+         threshold = 16.0f/3.0f;        // original // overrided by SIFThesaff.cpp threshold = 0.04f * 256 / 3;
+         //edgeEigenValueRatio = 10.0f; // original
+         edgeEigenValueRatio = 15.0f;   // good for bow_sig_extractor, a bit higher amount of keypoint
+         border = 5;                    // original
       }
 };
 

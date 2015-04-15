@@ -12,14 +12,6 @@
 #ifndef __SIFTDESC_H__
 #define __SIFTDESC_H__
 
-#include <vector>
-#include "helpers.h"
-
-#include "opencv2/core/core.hpp"
-#include "opencv2/nonfree/features2d.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/calib3d/calib3d.hpp"
-
 using namespace cv;
 
 struct SIFTDescriptorParams

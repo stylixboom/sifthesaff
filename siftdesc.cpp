@@ -8,6 +8,14 @@
  */
 
 #include <vector>
+
+#include "opencv2/core/core.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
+
+#include "helpers.h"
+
 #include "siftdesc.h"
 
 using namespace std;
@@ -145,16 +153,12 @@ void SIFTDescriptor::sample()
     normalize();
     // check if there are some values above threshold
     bool changed = false;
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        if (vec[i] > par.maxBinValue)
+    for (size_t i = 0; i < vec.size(); i++) if (vec[i] > par.maxBinValue)
         {
             vec[i] = par.maxBinValue;
             changed = true;
         }
-    }
-    if (changed)
-        normalize();
+    if (changed) normalize();
 
     for (size_t i = 0; i < vec.size(); i++)
     {

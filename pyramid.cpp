@@ -8,12 +8,18 @@
  */
 
 #include <vector>
-#include <string.h>
+#include <string>
 #include <algorithm>
-#include "pyramid.h"
-#include "helpers.h"
-
 #include <iostream>
+
+#include "opencv2/core/core.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
+
+#include "pyramid.h"
+
+#include "helpers.h"
 
 using namespace std;
 /* find blob point type from Hessian matrix H,
@@ -122,85 +128,85 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
 
 void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixelDistance)
 {
-    const int cols = cur.cols;
-    const int rows = cur.rows;
+   const int cols = cur.cols;
+   const int rows = cur.rows;
 
-    float b[3] = {};
-    float val = 0;
-    //bool converged = false;
-    int nr = r, nc = c;
+   float b[3] = {};
+   float val = 0;
+   //bool converged = false;
+   int nr = r, nc = c;
 
-    for (int iter=0; iter<5; iter++)
-    {
-        // take current position
-        r = nr; c = nc;
+   for (int iter=0; iter<5; iter++)
+   {
+      // take current position
+      r = nr; c = nc;
 
-        float dxx = cur.at<float>(r,c-1) - 2.0f * cur.at<float>(r,c) + cur.at<float>(r,c+1);
-        float dyy = cur.at<float>(r-1,c) - 2.0f * cur.at<float>(r,c) + cur.at<float>(r+1,c);
-        float dss = low.at<float>(r,c  ) - 2.0f * cur.at<float>(r,c) + high.at<float>(r, c);
+      float dxx = cur.at<float>(r,c-1) - 2.0f * cur.at<float>(r,c) + cur.at<float>(r,c+1);
+      float dyy = cur.at<float>(r-1,c) - 2.0f * cur.at<float>(r,c) + cur.at<float>(r+1,c);
+      float dss = low.at<float>(r,c  ) - 2.0f * cur.at<float>(r,c) + high.at<float>(r, c);
 
-        float dxy = 0.25f*(cur.at<float>(r+1,c+1) - cur.at<float>(r+1,c-1) - cur.at<float>(r-1,c+1) + cur.at<float>(r-1,c-1));
-        // check edge like shape of the response function in first iteration
-        if (0 == iter)
-        {
-            float edgeScore = (dxx + dyy)*(dxx + dyy)/(dxx * dyy - dxy * dxy);
-            if (edgeScore >= edgeScoreThreshold || edgeScore < 0)
-                // local neighbourhood looks like an edge
-                return;
-        }
-        float dxs = 0.25f*(high.at<float>(r  ,c+1) - high.at<float>(r  ,c-1) - low.at<float>(r  ,c+1) + low.at<float>(r  ,c-1));
-        float dys = 0.25f*(high.at<float>(r+1,c  ) - high.at<float>(r-1,c  ) - low.at<float>(r+1,c  ) + low.at<float>(r-1,c  ));
-
-        float A[9];
-        A[0] = dxx; A[1] = dxy; A[2] = dxs;
-        A[3] = dxy; A[4] = dyy; A[5] = dys;
-        A[6] = dxs; A[7] = dys; A[8] = dss;
-
-        float dx = 0.5f*(cur.at<float>(r,c+1) - cur.at<float>(r,c-1));
-        float dy = 0.5f*(cur.at<float>(r+1,c) - cur.at<float>(r-1,c));
-        float ds = 0.5f*(high.at<float>(r,c)  - low.at<float>(r,c));
-
-        b[0] = - dx; b[1] = - dy; b[2] = - ds;
-
-        solveLinear3x3(A, b);
-
-        // check if the solution is valid
-        if (isnan(b[0]) || isnan(b[1]) || isnan(b[2]))
+      float dxy = 0.25f*(cur.at<float>(r+1,c+1) - cur.at<float>(r+1,c-1) - cur.at<float>(r-1,c+1) + cur.at<float>(r-1,c-1));
+      // check edge like shape of the response function in first iteration
+      if (0 == iter)
+      {
+         float edgeScore = (dxx + dyy)*(dxx + dyy)/(dxx * dyy - dxy * dxy);
+         if (edgeScore >= edgeScoreThreshold || edgeScore < 0)
+            // local neighbourhood looks like an edge
             return;
+      }
+      float dxs = 0.25f*(high.at<float>(r  ,c+1) - high.at<float>(r  ,c-1) - low.at<float>(r  ,c+1) + low.at<float>(r  ,c-1));
+      float dys = 0.25f*(high.at<float>(r+1,c  ) - high.at<float>(r-1,c  ) - low.at<float>(r+1,c  ) + low.at<float>(r-1,c  ));
 
-        // aproximate peak value
-        val = cur.at<float>(r,c) + 0.5f * (dx*b[0] + dy*b[1] + ds*b[2]);
+      float A[9];
+      A[0] = dxx; A[1] = dxy; A[2] = dxs;
+      A[3] = dxy; A[4] = dyy; A[5] = dys;
+      A[6] = dxs; A[7] = dys; A[8] = dss;
 
-        // if we are off by more than MAX_SUBPIXEL_SHIFT, update the position and iterate again
-        if (b[0] >  MAX_SUBPIXEL_SHIFT) { if (c < cols - POINT_SAFETY_BORDER) nc++; else return; }
-        if (b[1] >  MAX_SUBPIXEL_SHIFT) { if (r < rows - POINT_SAFETY_BORDER) nr++; else return; }
-        if (b[0] < -MAX_SUBPIXEL_SHIFT) { if (c >        POINT_SAFETY_BORDER) nc--; else return; }
-        if (b[1] < -MAX_SUBPIXEL_SHIFT) { if (r >        POINT_SAFETY_BORDER) nr--; else return; }
+      float dx = 0.5f*(cur.at<float>(r,c+1) - cur.at<float>(r,c-1));
+      float dy = 0.5f*(cur.at<float>(r+1,c) - cur.at<float>(r-1,c));
+      float ds = 0.5f*(high.at<float>(r,c)  - low.at<float>(r,c));
 
-        if (nr == r && nc == c)
-        {
+      b[0] = - dx; b[1] = - dy; b[2] = - ds;
+
+      solveLinear3x3(A, b);
+
+      // check if the solution is valid
+      if (isnan(b[0]) || isnan(b[1]) || isnan(b[2]))
+         return;
+
+      // aproximate peak value
+      val = cur.at<float>(r,c) + 0.5f * (dx*b[0] + dy*b[1] + ds*b[2]);
+
+      // if we are off by more than MAX_SUBPIXEL_SHIFT, update the position and iterate again
+      if (b[0] >  MAX_SUBPIXEL_SHIFT) { if (c < cols - POINT_SAFETY_BORDER) nc++; else return; }
+      if (b[1] >  MAX_SUBPIXEL_SHIFT) { if (r < rows - POINT_SAFETY_BORDER) nr++; else return; }
+      if (b[0] < -MAX_SUBPIXEL_SHIFT) { if (c >        POINT_SAFETY_BORDER) nc--; else return; }
+      if (b[1] < -MAX_SUBPIXEL_SHIFT) { if (r >        POINT_SAFETY_BORDER) nr--; else return; }
+
+      if (nr == r && nc == c)
+      {
          // converged, displacement is sufficiently small, terminate here
          // TODO: decide if we want only converged local extrema...
          //converged = true;
          break;
-        }
-    }
+      }
+   }
 
-    // if spatial localization was all right and the scale is close enough...
-    if (fabs(b[0]) > 1.5 || fabs(b[1]) > 1.5 || fabs(b[2]) > 1.5 || fabs(val) < finalThreshold || octaveMap.at<unsigned char>(r,c) > 0)
-        return;
+   // if spatial localization was all right and the scale is close enough...
+   if (fabs(b[0]) > 1.5 || fabs(b[1]) > 1.5 || fabs(b[2]) > 1.5 || fabs(val) < finalThreshold || octaveMap.at<unsigned char>(r,c) > 0)
+      return;
 
-    // mark we were here already
-    octaveMap.at<unsigned char>(r,c) = 1;
+   // mark we were here already
+   octaveMap.at<unsigned char>(r,c) = 1;
 
-    // output keypoint
-    float scale = curScale * pow(2.0f, b[2] / par.numberOfScales );
+   // output keypoint
+   float scale = curScale * pow(2.0f, b[2] / par.numberOfScales );
 
-    // set point type according to final location
-    int type = getHessianPointType(blur.ptr<float>(r)+c, val);
+   // set point type according to final location
+   int type = getHessianPointType(blur.ptr<float>(r)+c, val);
 
-    // point is now scale and translation invariant, add it...
-    if (hessianKeypointCallback)
+   // point is now scale and translation invariant, add it...
+   if (hessianKeypointCallback)
       hessianKeypointCallback->onHessianKeypointDetected(prevBlur, pixelDistance*(c + b[0]), pixelDistance*(r + b[1]), pixelDistance*scale, pixelDistance, type, val);
 }
 

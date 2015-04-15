@@ -6,6 +6,14 @@
  * the terms of the BSD license (see the COPYING file).
  *
  */
+#include <vector>
+
+#include "opencv2/core/core.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
+
+#include "helpers.h"
 
 #include "affine.h"
 
