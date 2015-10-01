@@ -25,7 +25,7 @@ class SIFThesaff
     bool check_file_exist;
 
     int colorspace;
-    bool normalize;
+    bool normalize_pt;
 	bool RootSIFT;
 	int g_numberOfPoints;
 	int g_numberOfAffinePoints;
@@ -40,9 +40,9 @@ class SIFThesaff
     bool has_desc;
 
 public:
-	SIFThesaff(int Colorspace = RGB_SPACE, bool isNormalize = false, bool isRootSIFT = true, bool isCheckFile = true); // colorspace = 0 is rgb
+	SIFThesaff(int Colorspace = RGB_SPACE, bool isNormalizePt = false, bool isRootSIFT = true, bool isCheckFile = true); // colorspace = 0 is rgb
 	~SIFThesaff(void);
-	void init(int Colorspace = RGB_SPACE, bool isNormalize = false, bool isRootSIFT = true, bool isCheckFile = true);
+	void init(int Colorspace = RGB_SPACE, bool isNormalizePt = false, bool isRootSIFT = true, bool isCheckFile = true);
 	static string version() { return siftlib_AutoVersion::siftlib_FULLVERSION_STRING; }; // Version
 	static int GetSIFTD() { return D; };
 	static int GetSIFTHeadSize() { return HEADSIZE; };
@@ -59,6 +59,7 @@ public:
 	int extractPerdochSIFT(const Mat& img);
 	void unlink_kp();
 	void unlink_desc();
-	void Reset(void);
+	void reset(void);
 	void rgb2lab(const uchar R, const uchar G, const uchar B, uchar& Lv, uchar& av, uchar& bv);
 };
+//;)

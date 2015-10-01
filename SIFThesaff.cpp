@@ -35,14 +35,14 @@ using namespace std;
 using namespace cv;
 using namespace alphautils;
 
-SIFThesaff::SIFThesaff(int Colorspace, bool isNormalize, bool isRootSIFT, bool isCheckFile)
+SIFThesaff::SIFThesaff(int Colorspace, bool isNormalizePt, bool isRootSIFT, bool isCheckFile)
 {
-    init(Colorspace, isNormalize, isRootSIFT, isCheckFile);
+    init(Colorspace, isNormalizePt, isRootSIFT, isCheckFile);
 }
 
 SIFThesaff::~SIFThesaff(void)
 {
-	Reset();
+	reset();
 }
 
 struct SIFThesaff::HessianAffineParams
@@ -64,10 +64,10 @@ struct SIFThesaff::HessianAffineParams
 	}
 };
 
-void SIFThesaff::init(int Colorspace, bool isNormalize, bool isRootSIFT, bool isCheckFile)
+void SIFThesaff::init(int Colorspace, bool isNormalizePt, bool isRootSIFT, bool isCheckFile)
 {
     colorspace = Colorspace;
-    normalize = isNormalize;
+    normalize_pt = isNormalizePt;
 	RootSIFT = isRootSIFT;
 	check_file_exist = isCheckFile;
 	g_numberOfPoints = 0;
@@ -172,7 +172,7 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
 
 bool SIFThesaff::importKeypoints(const string& in, bool isBinary)
 {
-    Reset();
+    reset();
 
     if(check_file_exist && !is_path_exist(in)) // no exist
     {
@@ -391,26 +391,26 @@ int SIFThesaff::checkNumKp(const string& in, bool isBinary)
 int SIFThesaff::extractPerdochSIFT(const string& imgPath)
 {
 	Mat tmp = imread(imgPath);
-	extractPerdochSIFT(tmp);
+	num_kp = extractPerdochSIFT(tmp);
 	tmp.release();
 
 	return num_kp;
 }
 
-int SIFThesaff::extractPerdochSIFT(const Mat& tmp)
+int SIFThesaff::extractPerdochSIFT(const Mat& imgMat)
 {
-	Reset();
+	reset();
 
-	//Mat tmp = imread(image_filename);
-	Mat image(tmp.rows, tmp.cols, CV_32FC1, Scalar(0)); // float 1 channel
+	//Mat imgMat = imread(image_filename);
+	Mat image(imgMat.rows, imgMat.cols, CV_32FC1, Scalar(0)); // float 1 channel
 
 	float *out = image.ptr<float>(0);
 
     // Make gray scale by (b+g+r)/3
     if (colorspace == RGB_SPACE)
     {
-        const uchar *in = tmp.ptr<uchar>(0);
-        for (size_t i = tmp.rows * tmp.cols; i > 0; i--)
+        const uchar *in = imgMat.ptr<uchar>(0);
+        for (size_t i = imgMat.rows * imgMat.cols; i > 0; i--)
         {
             *out = (float(in[0]) + in[1] + in[2]) / 3.0f;
             out++;
@@ -421,11 +421,11 @@ int SIFThesaff::extractPerdochSIFT(const Mat& tmp)
     // http://docs.opencv.org/modules/imgproc/doc/miscellaneous_transformations.html
     else if (colorspace == IRGB_SPACE)
     {
-        //Mat tmp_gray(tmp.rows, tmp.cols, CV_8UC1, Scalar(0));
-        //cvtColor(tmp, tmp_gray, CV_BGR2GRAY);
-        const uchar *in = tmp.ptr<uchar>(0);
+        //Mat tmp_gray(imgMat.rows, imgMat.cols, CV_8UC1, Scalar(0));
+        //cvtColor(imgMat, tmp_gray, CV_BGR2GRAY);
+        const uchar *in = imgMat.ptr<uchar>(0);
         //const uchar *in = tmp_gray.ptr<uchar>(0);
-        for (size_t i = tmp.rows * tmp.cols; i > 0; i--)
+        for (size_t i = imgMat.rows * imgMat.cols; i > 0; i--)
         {
             *out = 0.2989f * in[2] + 0.5870f * in[1] + 0.1140f * in[0];
             //*out = float(in[0]);
@@ -438,10 +438,10 @@ int SIFThesaff::extractPerdochSIFT(const Mat& tmp)
     else
     {
         //Convert BGR to LAB
-        Mat tmp_lab(tmp.rows, tmp.cols, CV_8UC3, Scalar(0, 0, 0));
-        cvtColor(tmp, tmp_lab, CV_BGR2Lab);
+        Mat tmp_lab(imgMat.rows, imgMat.cols, CV_8UC3, Scalar(0, 0, 0));
+        cvtColor(imgMat, tmp_lab, CV_BGR2Lab);
         const uchar *in = tmp_lab.ptr<uchar>(0);
-        for (size_t i = tmp.rows * tmp.cols; i > 0; i--)
+        for (size_t i = imgMat.rows * imgMat.cols; i > 0; i--)
         {
             *out = float(in[0]);
             //uchar Lv, av, bv;
@@ -475,14 +475,14 @@ int SIFThesaff::extractPerdochSIFT(const Mat& tmp)
 	//cout << "Detected " << g_numberOfPoints << " keypoints and " << g_numberOfAffinePoints << " affine shapes in " << getTime()-t1 << " sec." << endl;
 
     // Get width and height
-    width = tmp.cols;
-    height = tmp.rows;
+    width = imgMat.cols;
+    height = imgMat.rows;
 
     // Got result here, in kp and desc
 	num_kp = detector.extractKeypoints(kp, desc);
 
 	// Point normalization to 0-1 scale
-	if (normalize)
+	if (normalize_pt)
 	{
         for (int kp_idx = 0; kp_idx < num_kp; kp_idx++)
         {
@@ -508,7 +508,7 @@ void SIFThesaff::unlink_desc()
     has_desc = false;
 }
 
-void SIFThesaff::Reset(void)
+void SIFThesaff::reset(void)
 {
 	// Release Mem
 	if(num_kp)
