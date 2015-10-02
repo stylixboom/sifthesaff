@@ -13,8 +13,8 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=Siriwat Kasamwattanarote
-Date                   :=29/09/15
-CodeLitePath           :="/home/stylix/.codelite"
+Date                   :=02/10/15
+CodeLitePath           :="/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/configurations/.codelite"
 LinkerName             :=g++
 SharedObjectLinkerName :=g++ -shared -fPIC
 ObjectSuffix           :=.o
@@ -41,7 +41,7 @@ IncludePCH             :=
 RcIncludePath          := 
 Libs                   := $(LibrarySwitch)sifthesaff $(LibrarySwitch)alphautils $(LibrarySwitch)opencv_core $(LibrarySwitch)opencv_features2d $(LibrarySwitch)opencv_highgui 
 ArLibs                 :=  "libsifthesaff.a" "libalphautils.a" "opencv_core" "opencv_features2d" "opencv_highgui" 
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/home/stylix/local/lib $(LibraryPathSwitch)../alphautils 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/home/stylix/local/lib $(LibraryPathSwitch)../alphautils/$(ConfigurationName) $(LibraryPathSwitch)./$(ConfigurationName) 
 
 ##
 ## Common variables
@@ -72,20 +72,20 @@ Objects=$(Objects0)
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d "../../.build-release/alphautils" "../../.build-release/sifthesaff" $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d "../../.build-release/sifthesaff" "../../.build-release/alphautils" $(Objects) 
 	@$(MakeDirCommand) $(@D)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
 	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
 
-"../../.build-release/alphautils":
-	@$(MakeDirCommand) "../../.build-release"
-	@echo stam > "../../.build-release/alphautils"
-
-
 "../../.build-release/sifthesaff":
 	@$(MakeDirCommand) "../../.build-release"
 	@echo stam > "../../.build-release/sifthesaff"
+
+
+"../../.build-release/alphautils":
+	@$(MakeDirCommand) "../../.build-release"
+	@echo stam > "../../.build-release/alphautils"
 
 
 
