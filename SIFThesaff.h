@@ -14,14 +14,19 @@
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
-#define D 128
-#define HEADSIZE 5
+// Siriwat's header
+#include "../alphautils/imtools.h"
+
+#define SIFT_D 128
+#define SIFT_HEADSIZE 5
 
 using namespace std;
 using namespace cv;
+using namespace alphautils;
+using namespace alphautils::imtools;
 
 class SIFThesaff
-{
+{		
     bool check_file_exist;
 
     int colorspace;
@@ -30,22 +35,17 @@ class SIFThesaff
 	int g_numberOfPoints;
 	int g_numberOfAffinePoints;
 
-	// Color space
-    const static int RGB_SPACE = 10;
-    const static int IRGB_SPACE = 11;
-    const static int LAB_SPACE = 12;
-
     // Memory management flag
     bool has_kp;
     bool has_desc;
 
-public:
+public:	
 	SIFThesaff(int Colorspace = RGB_SPACE, bool isNormalizePt = false, bool isRootSIFT = true, bool isCheckFile = true); // colorspace = 0 is rgb
 	~SIFThesaff(void);
 	void init(int Colorspace = RGB_SPACE, bool isNormalizePt = false, bool isRootSIFT = true, bool isCheckFile = true);
 	static string version() { return siftlib_AutoVersion::siftlib_FULLVERSION_STRING; }; // Version
-	static int GetSIFTD() { return D; };
-	static int GetSIFTHeadSize() { return HEADSIZE; };
+	static int GetSIFTD() { return SIFT_D; };
+	static int GetSIFTHeadSize() { return SIFT_HEADSIZE; };
 
 	vector<float*> kp; // x y a b c
 	vector<float*> desc; // x-descriptors
@@ -61,5 +61,11 @@ public:
 	void unlink_desc();
 	void reset(void);
 	void rgb2lab(const uchar R, const uchar G, const uchar B, uchar& Lv, uchar& av, uchar& bv);
+	
+	// SIFT drawing specific
+	void draw_sifts(const string& in_img_path, const string& out_img_path, const string& sift_path, int draw_mode, int colorspace = RGB_SPACE, bool normpoint = true, bool rootsift = true, bool binary = true);
+	void draw_sifts(const string& in_img_path, const string& out_img_path, const vector<INS_KP>& sift_keypoints, int draw_mode, int colorspace = RGB_SPACE, bool normpoint = true, bool rootsift = true);
+	void draw_sifts(Mat& in_img, const string& sift_path, int draw_mode, int colorspace = RGB_SPACE, bool normpoint = true, bool rootsift = true, bool binary = true);
+	float draw_a_sift(Mat& in_img, INS_KP in_keypoint, int draw_mode, bool normpoint = true);
 };
 //;)

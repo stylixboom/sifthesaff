@@ -20,6 +20,7 @@
 
 // Siriwat's header
 #include "../alphautils/alphautils.h"
+#include "../alphautils/imtools.h"
 
 #include "AffineHessianDetector.cpp"
 #include "pyramid.h"
@@ -91,9 +92,9 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
 		{
 		    /// Prepare buffer
 		    size_t buffer_size = sizeof(int) * 4 +
-                                 num_kp * (HEADSIZE * sizeof(float) + D * sizeof(float));
+                                 num_kp * (SIFT_HEADSIZE * sizeof(float) + SIFT_D * sizeof(float));
                                  // sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(num_kp) +
-                                 // num_kp * (HEADSIZE * sizeof(kp) + D * sizeof(desc))
+                                 // num_kp * (SIFT_HEADSIZE * sizeof(kp) + SIFT_D * sizeof(desc))
             char* buffer = new char[buffer_size];
             char* buffer_ptr = buffer;
 
@@ -107,7 +108,7 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
             buffer_ptr += sizeof(int);
 
 			// Put len_sift
-            *((int*)buffer_ptr) = D;
+            *((int*)buffer_ptr) = SIFT_D;
             buffer_ptr += sizeof(int);
 
 			// Put num_kp
@@ -130,7 +131,7 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
                 buffer_ptr += sizeof(float);
 
 				// Put sift data
-				for (int desc_idx = 0; desc_idx < D; desc_idx++)
+				for (int desc_idx = 0; desc_idx < SIFT_D; desc_idx++)
                 {
                     *((float*)buffer_ptr) = desc[kp_idx][desc_idx];
                     buffer_ptr += sizeof(float);
@@ -154,13 +155,13 @@ void SIFThesaff::exportKeypoints(const string& out, bool isBinary)
         {
             OutFile << width << endl;
             OutFile << height << endl;
-            OutFile << D << endl;
+            OutFile << SIFT_D << endl;
             OutFile << num_kp << endl;
 
             for(int kp_idx = 0; kp_idx < num_kp; kp_idx++)
             {
                 OutFile << kp[kp_idx][0] << " " << kp[kp_idx][1] << " " << kp[kp_idx][2] << " " << kp[kp_idx][3] << " " << kp[kp_idx][4] << " ";
-                for(size_t desc_pos = 0; desc_pos < D; desc_pos++)
+                for(size_t desc_pos = 0; desc_pos < SIFT_D; desc_pos++)
                     OutFile << desc[kp_idx][desc_pos] << " ";
                 OutFile << endl;
             }
@@ -215,7 +216,7 @@ bool SIFThesaff::importKeypoints(const string& in, bool isBinary)
             buffer_ptr += sizeof(height);
 
 			// Read len_sift
-			// Same as D
+			// Same as SIFT_D
             int len_sift;
             len_sift = *((int*)buffer_ptr);
             buffer_ptr += sizeof(len_sift);
@@ -224,7 +225,7 @@ bool SIFThesaff::importKeypoints(const string& in, bool isBinary)
             num_kp = *((int*)buffer_ptr);
             buffer_ptr += sizeof(num_kp);
 
-            size_t actual_filesize = sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(num_kp) + (num_kp * (HEADSIZE * sizeof(float) + len_sift * sizeof(float)));
+            size_t actual_filesize = sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(num_kp) + (num_kp * (SIFT_HEADSIZE * sizeof(float) + len_sift * sizeof(float)));
             if (actual_filesize != buffer_size)
             {
                 cout << "SIFT file is corrupt: " << in << endl;
@@ -241,8 +242,8 @@ bool SIFThesaff::importKeypoints(const string& in, bool isBinary)
 			for(int kp_idx = 0; kp_idx < num_kp; kp_idx++)
 			{
 				// Read sift head "x y a b c"
-                float* read_kp = new float[HEADSIZE];
-				for(int head_pos = 0; head_pos < HEADSIZE; head_pos++)
+                float* read_kp = new float[SIFT_HEADSIZE];
+				for(int head_pos = 0; head_pos < SIFT_HEADSIZE; head_pos++)
                 {
                     read_kp[head_pos] = *((float*)buffer_ptr);
                     buffer_ptr += sizeof(read_kp[head_pos]);
@@ -271,7 +272,7 @@ bool SIFThesaff::importKeypoints(const string& in, bool isBinary)
         ofstream InFile (in.c_str());
         if (InFile)
         {
-            InFile << D << endl;
+            InFile << SIFT_D << endl;
             InFile << num_kp << endl;
 
             for(size_t kpIdx = 0; kpIdx < kp.size(); kpIdx++)
@@ -347,7 +348,7 @@ int SIFThesaff::checkNumKp(const string& in, bool isBinary)
             ret_num_sift = *((int*)buffer_ptr);
             buffer_ptr += sizeof(ret_num_sift);
 
-            size_t actual_filesize = sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(ret_num_sift) + (ret_num_sift * (HEADSIZE * sizeof(float) + len_sift * sizeof(float)));
+            size_t actual_filesize = sizeof(width) + sizeof(height) + sizeof(len_sift) + sizeof(ret_num_sift) + (ret_num_sift * (SIFT_HEADSIZE * sizeof(float) + len_sift * sizeof(float)));
             if (actual_filesize != file_size)
             {
                 cout << "SIFT corrupt: " << actual_filesize << " - " << file_size << " " << in << endl;
@@ -367,7 +368,7 @@ int SIFThesaff::checkNumKp(const string& in, bool isBinary)
         ofstream InFile (in.c_str());
         if (InFile)
         {
-            InFile << D << endl;
+            InFile << SIFT_D << endl;
             InFile << num_kp << endl;
 
             for(size_t kpIdx = 0; kpIdx < kp.size(); kpIdx++)
@@ -596,5 +597,176 @@ void SIFThesaff::rgb2lab(const uchar R, const uchar G, const uchar B, uchar &Lv,
     Lv = (uchar) (2.55f * Ls + .5f);
     av = (uchar) (as + .5f);
     bv = (uchar) (bs + .5f);
+}
+
+// SIFT drawing specific
+void SIFThesaff::draw_sifts(const string& in_img_path, const string& out_img_path, const string& sift_path, int draw_mode, int colorspace, bool normpoint, bool rootsift, bool binary)
+{
+	Mat in_img = imread(in_img_path.c_str());
+
+	draw_sifts(in_img, sift_path, draw_mode, colorspace, normpoint, rootsift, binary);
+
+	imwrite(out_img_path.c_str(), in_img);
+}
+
+void SIFThesaff::draw_sifts(const string& in_img_path, const string& out_img_path, const vector<INS_KP>& sift_keypoints, int draw_mode, int colorspace, bool normpoint, bool rootsift)
+{
+	Mat in_img = imread(in_img_path.c_str());
+
+	for (size_t kp_idx = 0; kp_idx < sift_keypoints.size(); kp_idx++)
+		draw_a_sift(in_img, sift_keypoints[kp_idx], draw_mode, normpoint);
+
+	imwrite(out_img_path.c_str(), in_img);
+}
+
+void SIFThesaff::draw_sifts(Mat& in_img, const string& sift_path, int draw_mode, int colorspace, bool normpoint, bool rootsift, bool binary)
+{
+	SIFThesaff sift_reader(colorspace, normpoint, rootsift);
+	sift_reader.importKeypoints(sift_path, binary);
+	int num_kp = sift_reader.num_kp;
+
+	//float min_degree = 1000;
+	//float max_degree = -1000;
+
+	// Save degree for analyzing
+	//float* degree_pack = new float[num_kp];
+
+	for (int kp_idx = 0; kp_idx < num_kp; kp_idx++)
+	{
+		INS_KP curr_kp = {sift_reader.kp[kp_idx][0], sift_reader.kp[kp_idx][1], sift_reader.kp[kp_idx][2], sift_reader.kp[kp_idx][3], sift_reader.kp[kp_idx][4]};
+
+		draw_a_sift(in_img, curr_kp, draw_mode, normpoint);
+		/*
+		float raw_degree = draw_a_sift(in_img, curr_kp, draw_mode, colorspace, normpoint);
+
+		// Save degree
+		degree_pack[kp_idx] = raw_degree;
+
+		if (min_degree > raw_degree)
+			min_degree = raw_degree;
+		if (max_degree < raw_degree)
+			max_degree = raw_degree;
+		*/
+	}
+
+	/*
+	cout << "Min degree = " << min_degree << " Max degree: " << max_degree << endl;
+
+	// Degree analyzing
+	size_t* degree_hist;
+	float* degree_hist_label;
+	size_t degree_hist_size;
+	HIST_CONF hist_config = {HIST_RANGEMODE_MANUAL, -1, 0, 360, 1};
+	data_to_range_histogram(degree_pack, sift_reader.kp.size(), hist_config, degree_hist, degree_hist_label, degree_hist_size);
+
+	cout << "Degree histogram:" << endl;
+	for (size_t degree_hist_id = 0; degree_hist_id < degree_hist_size; degree_hist_id++)
+		cout << degree_hist_label[degree_hist_id] << " ";
+	cout << endl;
+	for (size_t degree_hist_id = 0; degree_hist_id < degree_hist_size; degree_hist_id++)
+		cout << degree_hist[degree_hist_id] << " ";
+	cout << endl;
+
+	// Release memory
+	delete[] degree_pack;
+	delete[] degree_hist;
+	delete[] degree_hist_label;
+	*/
+}
+
+float SIFThesaff::draw_a_sift(Mat& in_img, INS_KP in_keypoint, int draw_mode, bool normpoint)
+{
+	float ret_raw_degree = 0.0f;
+
+	Point2f center(in_keypoint.x, in_keypoint.y);             // x, y
+	if (normpoint)
+	{
+		center.x *= in_img.cols;
+		center.y *= in_img.rows;
+	}
+
+	if (draw_mode == DRAW_POINT)
+	{
+		// void circle(Mat& in_img, Point center, int radius, const Scalar& color, int thickness=1, int lineType=8, int shift=0)
+		circle(in_img, center, 0, Scalar(0, 255, 0), 2, CV_AA);
+	}
+	else // Affine by ellipse
+	{
+		/*float raw_degree = ellipse_abc2degree(in_keypoint.a, in_keypoint.b, in_keypoint.c);
+		float major_ax = 1/sqrt(in_keypoint.a);
+		float minor_ax = 1/sqrt(in_keypoint.c);*/
+		float raw_degree, major_ax, minor_ax;
+		vgg_abc2ellipse(in_keypoint.a, in_keypoint.b, in_keypoint.c, raw_degree, major_ax, minor_ax);
+		ret_raw_degree = raw_degree;
+		// Degree and axis correction
+//                    if (minor_ax > major_ax)
+//                    {
+//                        // Degree correction
+//                        /*if (in_keypoint.b < 0)
+//                            raw_degree += 90;
+//                        else
+//                            raw_degree -= 90;*/
+//
+//                        // Axis correction
+//                        float tmp = major_ax;
+//                        major_ax = minor_ax;
+//                        minor_ax = tmp;
+//                    }
+
+		Size axes(major_ax, minor_ax);            // major axis, minor axis
+		// void ellipse(Mat& in_img, Point center, Size axes, double angle, double startAngle, double endAngle, const Scalar& color, int thickness=1, int lineType=8, int shift=0)
+		int rand_b = rand() % 175 + 80;
+		int rand_g = rand() % 175 + 80;
+		int rand_r = rand() % 175 + 80;
+
+		// Color coded degree
+
+		if (raw_degree <= 90)       // Blue
+		{
+			rand_b = 255;
+			rand_g = 0;
+			rand_r = 0;
+		}
+		else if (raw_degree <= 180) // Green
+		{
+			rand_b = 0;
+			rand_g = 255;
+			rand_r = 0;
+		}
+		else if (raw_degree <= 270) // Red
+		{
+			rand_b = 0;
+			rand_g = 0;
+			rand_r = 255;
+		}
+		else if (raw_degree <= 360) // White
+		{
+			rand_b = 255;
+			rand_g = 255;
+			rand_r = 255;
+		}
+
+		if (draw_mode == DRAW_AFFINE)
+		{
+			if (0)  // Draw transparent
+			{
+				Mat transparent_buffer = Mat(in_img.rows, in_img.cols, CV_8UC3, Scalar(0, 0, 0));
+				ellipse(transparent_buffer, center, axes, raw_degree, 0, 360, Scalar(0, 0, 0), 2, CV_AA);                           // Ellipse shadow
+				ellipse(transparent_buffer, center, axes, raw_degree, 0, 360, Scalar(rand_b, rand_g, rand_r) * 0.5, 1, CV_AA);      // Ellipse line
+				ellipse(transparent_buffer, center, axes, raw_degree, -1, 1, Scalar(0, 0, 255) * 0.5, 3, CV_AA);                    // Ellipse point (direction)
+				in_img += transparent_buffer;
+			}
+			else    // Draw over
+			{
+				ellipse(in_img, center, axes, raw_degree, 0, 360, Scalar(0, 0, 0), 6, CV_AA);                       // Ellipse shadow
+				ellipse(in_img, center, axes, raw_degree, 0, 360, Scalar(rand_b, rand_g, rand_r), 2, CV_AA);        // Ellipse line
+				ellipse(in_img, center, axes, raw_degree, -1, 1, Scalar(0, 0, 255), 3, CV_AA);                      // Ellipse point (direction)
+			}
+		}
+		else // Affine mask
+			ellipse(in_img, center, axes, raw_degree, 0, 360, Scalar(255, 255, 255), -1, CV_AA);                    // Ellipse mask (filled ellipse)
+	}
+
+	return ret_raw_degree;
 }
 //;)
