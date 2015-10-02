@@ -14,6 +14,8 @@
 #include <unistd.h> // usleep
 #include <sys/types.h> // for checking exist file and dir
 #include <sys/stat.h>
+
+// Siriwat's header
 #include "../alphautils/alphautils.h"
 #include "../alphautils/imtools.h"
 #include "SIFThesaff.h"
@@ -114,7 +116,7 @@ int main(int argc,char *argv[])
         for(int kp_idx = 0; kp_idx < sift_display.num_kp; kp_idx++)
         {
             cout << sift_display.kp[kp_idx][0] << " " << sift_display.kp[kp_idx][1] << " " << sift_display.kp[kp_idx][2] << " " << sift_display.kp[kp_idx][3] << " " << sift_display.kp[kp_idx][4] << " ";
-            for(size_t desc_pos = 0; desc_pos < D; desc_pos++)
+            for(size_t desc_pos = 0; desc_pos < SIFT_D; desc_pos++)
                 cout << sift_display.desc[kp_idx][desc_pos] << " ";
             cout << endl;
         }
@@ -155,7 +157,7 @@ int main(int argc,char *argv[])
 	{
         cout << "Drawing SIFT overlay...";
         cout.flush();
-        draw_sifts(input_image, output_overlay_image, output_sift, draw_mode);
+        sifthesaff.draw_sifts(input_image, output_overlay_image, output_sift, draw_mode);
         cout << "done" << endl;
     }
 
