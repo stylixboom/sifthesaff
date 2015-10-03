@@ -5,16 +5,16 @@
 ## Release
 ProjectName            :=sifthesaff
 ConfigurationName      :=Release
-WorkspacePath          := "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code"
-ProjectPath            := "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/lib/sifthesaff"
+WorkspacePath          := "${HOME}/webstylix/code"
+ProjectPath            := "${HOME}/webstylix/code/lib/sifthesaff"
 IntermediateDirectory  :=./Release
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=Siriwat Kasamwattanarote
-Date                   :=02/10/15
-CodeLitePath           :="/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/configurations/.codelite"
+Date                   :=04/10/15
+CodeLitePath           :="${HOME}/webstylix/configurations/.codelite"
 LinkerName             :=g++
 SharedObjectLinkerName :=g++ -shared -fPIC
 ObjectSuffix           :=.o
@@ -36,12 +36,12 @@ ObjectsFileList        :="sifthesaff.txt"
 PCHCompileFlags        :=
 MakeDirCommand         :=mkdir -p
 LinkOptions            :=  
-IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)/home/stylix/local/include 
+IncludePath            :=  $(IncludeSwitch). $(IncludeSwitch)${HOME}/local/include 
 IncludePCH             := 
 RcIncludePath          := 
 Libs                   := 
 ArLibs                 :=  
-LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)/home/stylix/local/lib 
+LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)${HOME}/local/lib 
 
 ##
 ## Common variables
@@ -77,8 +77,8 @@ $(OutputFile): $(Objects)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
 	$(AR) $(ArchiveOutputSwitch)$(OutputFile) @$(ObjectsFileList) $(ArLibs)
-	@$(MakeDirCommand) "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/.build-release"
-	@echo rebuilt > "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/.build-release/sifthesaff"
+	@$(MakeDirCommand) "${HOME}/webstylix/code/.build-release"
+	@echo rebuilt > "${HOME}/webstylix/code/.build-release/sifthesaff"
 
 MakeIntermediateDirs:
 	@test -d ./Release || $(MakeDirCommand) ./Release
@@ -94,7 +94,7 @@ PreBuild:
 ## Objects
 ##
 $(IntermediateDirectory)/AffineHessianDetector.cpp$(ObjectSuffix): AffineHessianDetector.cpp $(IntermediateDirectory)/AffineHessianDetector.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/lib/sifthesaff/AffineHessianDetector.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/AffineHessianDetector.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "AffineHessianDetector.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/AffineHessianDetector.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/AffineHessianDetector.cpp$(DependSuffix): AffineHessianDetector.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/AffineHessianDetector.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/AffineHessianDetector.cpp$(DependSuffix) -MM "AffineHessianDetector.cpp"
 
@@ -102,7 +102,7 @@ $(IntermediateDirectory)/AffineHessianDetector.cpp$(PreprocessSuffix): AffineHes
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/AffineHessianDetector.cpp$(PreprocessSuffix) "AffineHessianDetector.cpp"
 
 $(IntermediateDirectory)/SIFThesaff.cpp$(ObjectSuffix): SIFThesaff.cpp $(IntermediateDirectory)/SIFThesaff.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/lib/sifthesaff/SIFThesaff.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/SIFThesaff.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "SIFThesaff.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/SIFThesaff.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/SIFThesaff.cpp$(DependSuffix): SIFThesaff.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/SIFThesaff.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/SIFThesaff.cpp$(DependSuffix) -MM "SIFThesaff.cpp"
 
@@ -110,7 +110,7 @@ $(IntermediateDirectory)/SIFThesaff.cpp$(PreprocessSuffix): SIFThesaff.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/SIFThesaff.cpp$(PreprocessSuffix) "SIFThesaff.cpp"
 
 $(IntermediateDirectory)/affine.cpp$(ObjectSuffix): affine.cpp $(IntermediateDirectory)/affine.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/lib/sifthesaff/affine.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/affine.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "affine.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/affine.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/affine.cpp$(DependSuffix): affine.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/affine.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/affine.cpp$(DependSuffix) -MM "affine.cpp"
 
@@ -118,7 +118,7 @@ $(IntermediateDirectory)/affine.cpp$(PreprocessSuffix): affine.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/affine.cpp$(PreprocessSuffix) "affine.cpp"
 
 $(IntermediateDirectory)/helpers.cpp$(ObjectSuffix): helpers.cpp $(IntermediateDirectory)/helpers.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/lib/sifthesaff/helpers.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/helpers.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "helpers.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/helpers.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/helpers.cpp$(DependSuffix): helpers.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/helpers.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/helpers.cpp$(DependSuffix) -MM "helpers.cpp"
 
@@ -126,7 +126,7 @@ $(IntermediateDirectory)/helpers.cpp$(PreprocessSuffix): helpers.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/helpers.cpp$(PreprocessSuffix) "helpers.cpp"
 
 $(IntermediateDirectory)/pyramid.cpp$(ObjectSuffix): pyramid.cpp $(IntermediateDirectory)/pyramid.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/lib/sifthesaff/pyramid.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/pyramid.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "pyramid.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/pyramid.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/pyramid.cpp$(DependSuffix): pyramid.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/pyramid.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/pyramid.cpp$(DependSuffix) -MM "pyramid.cpp"
 
@@ -134,7 +134,7 @@ $(IntermediateDirectory)/pyramid.cpp$(PreprocessSuffix): pyramid.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/pyramid.cpp$(PreprocessSuffix) "pyramid.cpp"
 
 $(IntermediateDirectory)/siftdesc.cpp$(ObjectSuffix): siftdesc.cpp $(IntermediateDirectory)/siftdesc.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/stylix/Dropbox/MyDocument/SokendaiCourse/Researches/Workspace/code/lib/sifthesaff/siftdesc.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/siftdesc.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "siftdesc.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/siftdesc.cpp$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/siftdesc.cpp$(DependSuffix): siftdesc.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/siftdesc.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/siftdesc.cpp$(DependSuffix) -MM "siftdesc.cpp"
 
