@@ -50,7 +50,7 @@ LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)${HOME}/loca
 AR       := ar rcu
 CXX      := g++
 CC       := gcc
-CXXFLAGS :=  -O3 -std=c++11 $(Preprocessors)
+CXXFLAGS :=  -O3 -fopenmp -std=c++11 $(Preprocessors)
 CFLAGS   :=   $(Preprocessors)
 ASFLAGS  := 
 AS       := as

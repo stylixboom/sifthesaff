@@ -50,7 +50,7 @@ LibPath                := $(LibraryPathSwitch). $(LibraryPathSwitch)${HOME}/loca
 AR       := ar rcu
 CXX      := g++
 CC       := gcc
-CXXFLAGS :=  -O3 -std=c++11 -Wall $(Preprocessors)
+CXXFLAGS :=  -O3 -fopenmp -std=c++11 -Wall $(Preprocessors)
 CFLAGS   :=  -O3 -Wall $(Preprocessors)
 ASFLAGS  := 
 AS       := as
@@ -72,23 +72,11 @@ Objects=$(Objects0)
 .PHONY: all clean PreBuild PrePreBuild PostBuild MakeIntermediateDirs
 all: $(OutputFile)
 
-$(OutputFile): $(IntermediateDirectory)/.d "../../.build-release/alphautils" "../../.build-release/sifthesaff" $(Objects) 
+$(OutputFile): $(IntermediateDirectory)/.d $(Objects) 
 	@$(MakeDirCommand) $(@D)
 	@echo "" > $(IntermediateDirectory)/.d
 	@echo $(Objects0)  > $(ObjectsFileList)
 	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
-
-"../../.build-release/alphautils":
-	@$(MakeDirCommand) "../../.build-release"
-	@echo stam > "../../.build-release/alphautils"
-
-
-"../../.build-release/sifthesaff":
-	@$(MakeDirCommand) "../../.build-release"
-	@echo stam > "../../.build-release/sifthesaff"
-
-
-
 
 MakeIntermediateDirs:
 	@test -d ./Release || $(MakeDirCommand) ./Release
