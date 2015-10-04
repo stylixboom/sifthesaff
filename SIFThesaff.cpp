@@ -409,7 +409,8 @@ int SIFThesaff::extractPerdochSIFT(const Mat& imgMat)
 
     // Make gray scale by (b+g+r)/3
     if (colorspace == RGB_SPACE)
-    {
+    {		
+		//cout << "GRAY" << endl;
         const uchar *in = imgMat.ptr<uchar>(0);
         for (size_t i = imgMat.rows * imgMat.cols; i > 0; i--)
         {
@@ -421,7 +422,8 @@ int SIFThesaff::extractPerdochSIFT(const Mat& imgMat)
     // Make gray scale by (0.2989 * R) + (0.5870 * G) + (0.1140 * B)
     // http://docs.opencv.org/modules/imgproc/doc/miscellaneous_transformations.html
     else if (colorspace == IRGB_SPACE)
-    {
+    {		
+		//cout << "IRGB" << endl;
         //Mat tmp_gray(imgMat.rows, imgMat.cols, CV_8UC1, Scalar(0));
         //cvtColor(imgMat, tmp_gray, CV_BGR2GRAY);
         const uchar *in = imgMat.ptr<uchar>(0);
@@ -437,7 +439,8 @@ int SIFThesaff::extractPerdochSIFT(const Mat& imgMat)
     }
     // Make gray from L channel from OpenCV Lab
     else
-    {
+    {		
+		//cout << "LAB" << endl;
         //Convert BGR to LAB
         Mat tmp_lab(imgMat.rows, imgMat.cols, CV_8UC3, Scalar(0, 0, 0));
         cvtColor(imgMat, tmp_lab, CV_BGR2Lab);

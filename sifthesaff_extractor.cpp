@@ -43,7 +43,7 @@ int main(int argc,char *argv[])
 	string output_overlay_image = "";
 	bool isBinary = false;
 	int colorspace = RGB_SPACE;
-	bool normsift = true;
+	bool normpoint = true;
 	bool rootsift = true;
 	bool draw_mode = DRAW_AFFINE;
 
@@ -79,8 +79,12 @@ int main(int argc,char *argv[])
                 if (isBinary)
                 {
                     output_overlay_image = input_image + "_overlay.png";
-                    if(argv[count + 1][0] == 'p')
+					if (argv[count + 1][0] == 'a')
+						draw_mode = DRAW_AFFINE;
+                    else if(argv[count + 1][0] == 'p')
                         draw_mode = DRAW_POINT;
+					else if (argv[count + 1][0] == 'c')
+						draw_mode = DRAW_CIRCLE;
                 }
                 break;
             case 'c':
@@ -91,7 +95,7 @@ int main(int argc,char *argv[])
                 break;
             case 'n':
 				if(argv[count + 1][0] == '0')
-					normsift = false;
+					normpoint = false;
                 break;
 			case 'r':
 				if(argv[count + 1][0] == '0')
@@ -139,7 +143,7 @@ int main(int argc,char *argv[])
             output_sift = "./" + input_image + ".hesaff.rootsift";
     }
 
-	SIFThesaff sifthesaff(colorspace, normsift, rootsift);
+	SIFThesaff sifthesaff(colorspace, normpoint, rootsift);
 
 	cout << "Extract sift..."; cout.flush();
 	timespec startTime = CurrentPreciseTime();
